@@ -22,22 +22,30 @@ The agent learns to command discrete target adjustment actions ($\Delta \theta \
 ### Environment Setup Instructions
 To set up the simulation and reinforcement learning environment on Windows 11 using WSL 2 (Ubuntu 24.04):
 
-1. **Activate virtual environment & Install dependencies:**
+1. **Install system dependencies (Prerequisites for WSL):**
+   Update your package list and install the required system libraries for git, Python virtual environment, and MuJoCo's OpenGL/GLFW rendering (essential for running simulation rendering and preventing package import errors):
+   ```bash
+   sudo apt update && sudo apt install -y python3-venv python3-dev build-essential git cmake ninja-build libglfw3  libglfw3-dev  libgl1-mesa-dev  libegl1-mesa-dev  libxinerama-dev  libxcursor-dev  libxi-dev  libxrandr-dev
+
+   ```
+
+2. **Activate virtual environment & Install dependencies:**
    Make sure you are in the workspace root:
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
+   python -m pip install --upgrade pip
    python -m pip install -r requirements.txt
    ```
 
-2. **Clone and Integrate External Unitree MuJoCo dependency:**
+3. **Clone and Integrate External Unitree MuJoCo dependency:**
    We use the official Unitree MuJoCo repository as an external dependency at a specific commit hash for compatibility:
    ```bash
    git clone https://github.com/unitreerobotics/unitree_mujoco.git external/unitree_mujoco
    git -C external/unitree_mujoco checkout ae6a8403e272733e9996ef59990880330496177f
    ```
 
-3. **Verify the environment configuration:**
+4. **Verify the environment configuration:**
    Run the environment test script to ensure registration and compatibility:
    ```bash
    PYTHONPATH=src python src/test_g1_elbow_env.py
