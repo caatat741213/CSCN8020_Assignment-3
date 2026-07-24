@@ -135,13 +135,13 @@ All scripts should be executed from the repository root:
 Below are precise and concise answers to the core assignment discussion questions:
 
 1. **Which policy is more sample efficient?**
-   * **Rule-based baseline:** Requires **0 training samples** (heuristic mathematical law), making it the most sample-efficient.
-   * **Among DQN configurations:** **Config B (Faster Decay)** is the most sample efficient in reaching the 80% success convergence threshold first (by Episode 60) due to its faster exploration reduction ($\epsilon$-decay = 0.985). However, **Config C (Linear Decay)** provides the best final asymptotic policy at the cost of more exploratory samples.
+   * **Rule-based baseline:** Requires **0 training samples** (heuristic mathematical law), making it the overall most sample-efficient.
+   * **Among DQN configurations (Sample Efficiency Comparison):** **Config B (Faster Decay, 0.985)** is the most sample-efficient learning policy. It converges much faster than Config A and Config C, reaching the 80% rolling success rate threshold at **Episode 60** compared to Episode 100+ for other configurations. By decreasing exploration early, it focuses on exploitation and saves training time and resources.
 
 2. **Which policy is more stable near the goal?**
    * **DQN policy** is significantly more stable.
-   * The **rule-based controller** is purely proportional and lacks velocity awareness. Upon reaching the goal, its high kinetic energy causes overshoot, forcing it to cycle actions (oscillating between increase/decrease) and introducing steady-state jitter.
-   * The **DQN agent** incorporates velocity ($\dot{\theta}_t$) in its observation state. It learns to decelerate the joint when approaching the goal and utilizes the `HOLD` action (Action 1) to damp movements, reducing overshoot and settling stably.
+   * **Stability & Control Behavior:** The rule-based controller is purely proportional and lacks velocity awareness. Upon reaching the goal, high kinetic energy causes overshoot, forcing it to cycle actions (oscillating between increase/decrease) and introducing steady-state jitter.
+   * The **DQN agent** reads the joint angular velocity $\dot{\theta}_t$ in its observation state. It learns to utilize **active braking** (applying reverse torque when error decreases while velocity is high) and selects the `HOLD` action (Action 1) to damp movements. This effectively eliminates overshoot and micro-oscillations.
 
 3. **Does the DQN generalize across all four target angles?**
    * **Yes.** The DQN agent generalized perfectly, achieving a **100% success rate** (20/20 episodes) across all four required benchmark targets ($-0.8, -0.4, +0.4, +0.8$ rad).
@@ -156,8 +156,10 @@ Below are precise and concise answers to the core assignment discussion question
    * **Config E (Small Buffer):** Displays higher variance in training rewards due to catastrophic forgetting and temporal overfitting.
    * **Selected DQN (Config B & C):** Exhibits minimal oscillation and is highly stable at the target.
 
-6. **Why might a hand-written policy outperform a learned policy in this simple task?**
-   * A hand-written policy (like a PID controller with gravity compensation) requires **zero sample complexity**, guarantees deterministic performance, has no function approximation errors, is transparent to debug, and works immediately. RL agents require thousands of trial-and-error environment steps to approximate these fundamental physical laws.
+6. **Why might a hand-written policy (like PID) outperform a learned policy in this simple task?**
+   * **Zero Training Time:** A hand-written PID controller works immediately with 100% sample efficiency, requiring zero training episodes.
+   * **No Function Approximation Error:** PID is based on deterministic physical formulas and has no approximation error or neural network generalization gaps.
+   * **Continuous Precision:** PID outputs continuous torque adjustments, bypassing the precision limitations of DQN's discrete action step size ($\Delta\theta = 0.05$ rad).
 
 ---
 

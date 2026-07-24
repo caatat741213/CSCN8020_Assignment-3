@@ -39,5 +39,5 @@ Assignment3.md
 # Project Specific
 external/
 logs/
-*.csv
+!results/**/*.csv
 .agents/

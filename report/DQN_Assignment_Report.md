@@ -4,7 +4,6 @@
 **Author:** Chao-Chung Liu  
 **Student ID:** 9067679  
 **Course:** Reinforcement Learning (CSCN8020)  
-**Date:** July 23, 2026  
 
 ---
 
