@@ -233,23 +233,23 @@ This section contains the experimental tables and training plots.
 ### 9.2 Training Curve Plots
 
 #### Figure 1: Training Rewards Convergence
-![Training Rewards](../results/plots/training_rewards.png)
+![Training Rewards](https://raw.githubusercontent.com/caatat741213/CSCN8020_Assignment-3/main/results/plots/training_rewards.png)
 *Figure 1: Comparison of cumulative episode rewards. All configurations converge rapidly within the first 100 episodes.*
 
 #### Figure 2: Rolling Success Rate
-![Training Success Rate](../results/plots/training_success_rate.png)
+![Training Success Rate](https://raw.githubusercontent.com/caatat741213/CSCN8020_Assignment-3/main/results/plots/training_success_rate.png)
 *Figure 2: Success rate calculated over a 50-episode rolling window. Config B (Faster Decay) achieves the 80% success rate threshold first.*
 
 #### Figure 3: Epsilon Decay Progression
-![Epsilon Decay](../results/plots/epsilon_decay.png)
+![Epsilon Decay](https://raw.githubusercontent.com/caatat741213/CSCN8020_Assignment-3/main/results/plots/epsilon_decay.png)
 *Figure 3: Epsilon decay schedules. Linear decay (Config C) maintains exploration longer compared to exponential schedules.*
 
 #### Figure 4: Training Loss Profiles
-![Training Loss](../results/plots/training_loss.png)
+![Training Loss](https://raw.githubusercontent.com/caatat741213/CSCN8020_Assignment-3/main/results/plots/training_loss.png)
 *Figure 4: Average Huber loss. Config D (Fast Target Update) exhibits high-frequency oscillations due to unstable TD targets.*
 
 #### Figure 5: Evaluation Success Rate by Target Angle
-![Evaluation Success by Angle](../results/plots/eval_success_by_angle.png)
+![Evaluation Success by Angle](https://raw.githubusercontent.com/caatat741213/CSCN8020_Assignment-3/main/results/plots/eval_success_by_angle.png)
 *Figure 5: Evaluation success rate by target angle. All configurations achieve 100% success across the benchmark goals ([-0.8, -0.4, +0.4, +0.8] rad).*
 
 ---
