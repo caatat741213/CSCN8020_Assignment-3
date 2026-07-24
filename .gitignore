@@ -1,0 +1,45 @@
+# Python / Virtual Environments / Cache
+.venv/
+venv/
+env/
+creates/
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDE / Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office Documents & Temporary Lock Files
+*.docx
+*.doc
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.pptx
+Assignment3.md
+
+# Media / Video Files (Large files)
+*.mkv
+*.mp4
+*.avi
+*.mov
+*.webm
+
+# Project Specific
+external/
+logs/
+results/
+*.csv
+.agents/
+Assignment3.md
