@@ -22,7 +22,7 @@ The control task is formulated as a discrete-time Markov Decision Process (MDP) 
 
 ### 2.1 Observation Space
 At each time step $t$, the environment outputs a 4-dimensional continuous state vector $s_t \in \mathbb{R}^4$:
-$$s_t = \begin{bmatrix} \theta_t \\ \dot{\theta}_t \\ \theta_g \\ e_t \end{bmatrix}$$
+$$s_t = \begin{bmatrix} \theta_t \\\\ \dot{\theta}_t \\\\ \theta_g \\\\ e_t \end{bmatrix}$$
 where:
 * $\theta_t$ is the current elbow joint angle (rad), bounded by the mechanical joint limits $[-1.0472, 2.0944]$ rad (representing $[-60^\circ, 120^\circ]$).
 * $\dot{\theta}_t$ is the joint angular velocity (rad/s), capturing the kinetic state of the arm.
@@ -63,7 +63,7 @@ The neural network structure is defined as:
 3. **Hidden Layer 2**: Fully connected linear layer with 64 units, followed by a ReLU activation:
    $$h_2 = \text{ReLU}(W_2 h_1 + b_2)$$
 4. **Output Layer**: Fully connected linear layer with 3 units representing the action value predictions:
-   $$\begin{bmatrix} Q(s_t, 0; \theta) \\ Q(s_t, 1; \theta) \\ Q(s_t, 2; \theta) \end{bmatrix} = W_3 h_2 + b_3$$
+    $$\begin{bmatrix} Q(s_t, 0; \theta) \\\\ Q(s_t, 1; \theta) \\\\ Q(s_t, 2; \theta) \end{bmatrix} = W_3 h_2 + b_3$$
 
 ### 3.2 Output Constraints
 The output layer employs **no activation function** (such as Softmax). DQN outputs represent estimated cumulative returns, which are unconstrained and can be negative. Using a Softmax activation is mathematically incorrect as it forces the Q-values to sum to 1, destroying the scale of the expected returns and preventing correct temporal-difference updates.
@@ -101,7 +101,7 @@ where the discount factor is $\gamma = 0.95$, and $d_{\text{terminated}, i} \in 
 The loss function is the Huber Loss, which is robust to target outliers:
 $$L(\theta) = \frac{1}{B} \sum_{i=1}^{B} \mathcal{H}\left( y_i - Q(s_i, a_i; \theta) \right)$$
 where:
-$$\mathcal{H}(u) = \begin{cases} \frac{1}{2} u^2 & \text{if } |u| \le \delta \\ \delta \left(|u| - \frac{1}{2} \delta\right) & \text{otherwise} \end{cases}$$
+$$\mathcal{H}(u) = \begin{cases} \frac{1}{2} u^2 & \text{if } |u| \le \delta \\\\ \delta \left(|u| - \frac{1}{2} \delta\right) & \text{otherwise} \end{cases}$$
 with threshold parameter $\delta = 1.0$.
 
 ### 5.3 Handling `terminated` vs. `truncated` Signals
@@ -116,7 +116,7 @@ If `truncated` were treated as `terminated` (setting target to just $r_t$), it w
 ## 6. Exploration Strategy
 
 To balance exploration and exploitation, we use an $\epsilon$-greedy strategy. The agent selects a random action with probability $\epsilon$, and the greedy action estimated by the online network with probability $1-\epsilon$:
-$$a_t = \begin{cases} \text{random action} & \text{with probability } \epsilon \\ \arg\max_{a} Q(s_t, a; \theta) & \text{with probability } 1 - \epsilon \end{cases}$$
+$$a_t = \begin{cases} \text{random action} & \text{with probability } \epsilon \\\\ \arg\max_{a} Q(s_t, a; \theta) & \text{with probability } 1 - \epsilon \end{cases}$$
 
 We evaluated three epsilon decay schedules, all starting at $\epsilon_{\text{start}} = 1.0$ and ending at $\epsilon_{\text{min}} = 0.05$:
 1. **Exponential Decay (Config A - Baseline)**: Decays per episode:
