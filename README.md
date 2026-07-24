@@ -128,6 +128,12 @@ All scripts should be executed from the repository root:
   PYTHONPATH=src python src/dqn/render_dqn_policy.py
   ```
 
+* **Running the Jupyter Notebook:**
+  Launch Jupyter Notebook to view and run the interactive codebase:
+  ```bash
+  jupyter notebook CSCN8020_Assignment_3.ipynb
+  ```
+
 ---
 
 ### Discussion & Answers
@@ -246,6 +252,7 @@ CSCN8020_Assignment 3/
 │   ├── demo_g1_elbow_env.py                 # Interactive workspace camera & command debugger
 │   ├── inspect_g1_model.py                  # MuJoCo G1 structural inspection tool
 │   └── test_g1_elbow_env.py                 # Core environment registration & determinism test
+├── CSCN8020_Assignment_3.ipynb              # Executable Jupyter Notebook with pre-saved training & evaluation logs
 ├── README.md                                # Setup, installation, execution commands, and discussion (this file)
 ├── requirements-lock.txt                    # Detailed package lockfile
 ├── requirements.txt                         # Key Python dependencies
