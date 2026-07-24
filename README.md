@@ -2,11 +2,11 @@
 ## Deep Q-Network (DQN) Left Elbow Joint Position Controller
 
 ### Student Details
-* **Student Name:** Chao-Chung Liu (劉超中)
+* **Student Name:** Chao-Chung Liu
 * **Student ID:** 9067679
 * **Course:** CSCN8020 - Reinforcement Learning
-* **Repository GitHub URL:** [https://github.com/ChaoChungLiu/CSCN8020_Assignment3](https://github.com/ChaoChungLiu/CSCN8020_Assignment3)
-* **Cloneable URL:** `https://github.com/ChaoChungLiu/CSCN8020_Assignment3.git`
+* **Instructor:** Prof. Enrique Espinosa
+* **Repository GitHub URL:** https://github.com/caatat741213/CSCN8020_Assignment-3.git
 
 ---
 

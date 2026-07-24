@@ -24,10 +24,10 @@ The control task is formulated as a discrete-time Markov Decision Process (MDP) 
 At each time step $t$, the environment outputs a 4-dimensional continuous state vector $s_t \in \mathbb{R}^4$:
 $$s_t = \begin{bmatrix} \theta_t \\ \dot{\theta}_t \\ \theta_g \\ e_t \end{bmatrix}$$
 where:
-* $\theta_t$ is the current elbow joint angle (rad), bounded by the mechanical joint limits $[-2.0, 2.0]$ rad.
+* $\theta_t$ is the current elbow joint angle (rad), bounded by the mechanical joint limits $[-1.0472, 2.0944]$ rad (representing $[-60^\circ, 120^\circ]$).
 * $\dot{\theta}_t$ is the joint angular velocity (rad/s), capturing the kinetic state of the arm.
 * $\theta_g$ is the target goal angle (rad), randomly sampled during training from the multi-goal range $[-0.8, +0.8]$ rad.
-* $e_t = \theta_g - \theta_t$ is the angular error (rad).
+* $e_t = \theta_g - \theta_t$ is the angular error (rad), bounded within $[-3.1416, 3.1416]$ rad.
 
 ### 2.2 Action Space
 The action space is discrete and contains 3 actions $a_t \in \{0, 1, 2\}$ which modulate the target position $\theta_{\text{trgt}}$ command sent to the underlying PD joint controller:
@@ -35,18 +35,19 @@ The action space is discrete and contains 3 actions $a_t \in \{0, 1, 2\}$ which 
 * **Action 1 (HOLD)**: Holds the current target: $\theta_{\text{trgt}, t} \leftarrow \theta_{\text{trgt}, t-1}$
 * **Action 2 (INCREASE)**: Increases target command: $\theta_{\text{trgt}, t} \leftarrow \text{clip}(\theta_{\text{trgt}, t-1} + \Delta\theta, \theta_{\text{low}}, \theta_{\text{high}})$
 
-where the action increment is $\Delta\theta = 0.05$ rad.
+where the action increment is $\Delta\theta = 0.08$ rad.
 
 ### 2.3 Reward Function
 The reward function shaping balances goal convergence speed and steady-state stability, defined as:
-$$r(s_t, a_t) = -|e_t| + R_{\text{bonus}}(e_t) - P_{\text{action}}(e_t, a_t)$$
+$$r(s_t, a_t) = -|e_t| + R_{\text{bonus}}(e_t) - P_{\text{action}}(e_t, a_t) + R_{\text{terminal}}(s_t)$$
 where:
-* $-|e_t|$ is the primary goal-distance penalty.
-* $R_{\text{bonus}}(e_t) = +1.0$ if $|e_t| \le 0.05$ rad (rewarding entry into the goal tolerance).
-* $P_{\text{action}}(e_t, a_t) = 0.05$ if $|e_t| \le 0.05$ rad and $a_t \ne 1$ (penalizing non-HOLD actions near the goal to prevent steady-state oscillation).
+* $-|e_t|$ is the primary goal-distance penalty (absolute angular error).
+* $R_{\text{bonus}}(e_t) = +1.0$ if $|e_t| \le 0.04$ rad (rewarding entry into the success tolerance window).
+* $P_{\text{action}}(e_t, a_t) = 0.05$ if $|e_t| \le 0.04$ rad and $a_t \ne 1$ (penalizing non-HOLD actions near the goal to discourage steady-state oscillations).
+* $R_{\text{terminal}}(s_t) = +10.0$ if the terminal success criteria are met (when the success streak is $\ge 8$ consecutive steps).
 
 ### 2.4 Success Criteria
-An episode is declared successful if the joint angle error stays within the success tolerance ($|e_t| \le 0.05$ rad) for a continuous duration of $15$ environment steps.
+An episode is declared successful if the joint angle error stays within the success tolerance ($|e_t| \le 0.04$ rad) for a continuous duration of $8$ environment steps.
 
 ---
 
@@ -74,7 +75,7 @@ The output layer employs **no activation function** (such as Softmax). DQN outpu
 To ensure training stability and prevent divergence, two standard reinforcement learning techniques are incorporated: Experience Replay and Target Network Decoupling.
 
 ### 4.1 Replay Buffer
-Transitions $e_t = (s_t, a_t, r_t, s_{t+1}, d_{\text{terminated}, t})$ are stored in a circular replay buffer $\mathcal{D}$ of capacity $N = 50,000$. During optimization, mini-batches of size $B = 64$ are sampled uniformly at random.
+Transitions $\tau_t = (s_t, a_t, r_t, s_{t+1}, d_{\text{terminated}, t})$ are stored in a circular replay buffer $\mathcal{D}$ of capacity $N = 50,000$. During optimization, mini-batches of size $B = 64$ are sampled uniformly at random.
 * **Temporal Autocorrelation**: Successive steps in MuJoCo are highly correlated, violating the I.I.D. assumption of stochastic gradient descent. Random sampling breaks these correlations.
 * **Sample Efficiency**: Experiences are reused multiple times, speeding up training on CPU.
 
@@ -152,20 +153,34 @@ Training is executed headlessly (without opening visual windows) using `render_m
 
 ## 8. Results for Both Epsilon-Decay Configurations
 
-This section presents the results for the two exponential epsilon-decay configurations (Config A vs. Config B) evaluated on the 20-episode benchmark suite.
+This section presents the comparative results for the two exponential epsilon-decay configurations (Config A vs. Config B) under controlled environment seeds and hyperparameters.
 
-* **Configuration A (Baseline, $\epsilon$-decay = 0.995)**:
-  * Mean Cumulative Reward: $13.2623$
-  * Mean Episode Length: $19.75$ steps
-  * Mean Angle Error: $0.005197$ rad
-  * Success Rate: $100\%$ ($20/20$ episodes)
-* **Configuration B (Faster Decay, $\epsilon$-decay = 0.985)**:
-  * Mean Cumulative Reward: $13.3026$
-  * Mean Episode Length: $19.50$ steps
-  * Mean Angle Error: $0.010608$ rad
-  * Success Rate: $100\%$ ($20/20$ episodes)
+### 8.1 Detailed Parameter and Metrics Comparison
 
-Config B transitioned from exploration to exploitation earlier, resulting in slightly lower steps ($19.50$ vs. $19.75$) and higher cumulative reward ($13.3026$ vs. $13.2623$), but Config A achieved lower average joint position error near the goal due to its longer exploration phase refining the value values.
+To systematically analyze the impact of exploration decay, we track and report all required performance metrics below:
+
+| Performance Metric | Configuration A (Baseline, $\epsilon$-decay = 0.995) | Configuration B (Faster Decay, $\epsilon$-decay = 0.985) |
+| :--- | :---: | :---: |
+| **Total Training Episodes** | 700 episodes | 700 episodes |
+| **Wall-clock Training Time (CPU)** | 60.71 seconds | 46.94 seconds |
+| **Final Epsilon ($\epsilon_{\text{final}}$)** | 0.0500 | 0.0500 |
+| **Mean Training Reward (Final 20 Ep.)** | 15.5730 | 15.5987 |
+| **Training Success Rate (Final 50 Ep.)** | 100.0% | 100.0% |
+| **Final Greedy Evaluation Success Rate** | 100.0% ($20/20$ successes) | 100.0% ($20/20$ successes) |
+| **Mean Evaluation Cumulative Reward** | 13.2623 | 13.3026 |
+| **Mean Evaluation Episode Length (Steps)** | 19.75 steps | 19.50 steps |
+| **Mean Evaluation Angle Error** | 0.005197 rad | 0.010608 rad |
+
+### 8.2 Observations about Stability, Convergence, and Action Behaviour
+
+1. **Convergence and Learning Speed**: 
+   Both configurations successfully converged to a $100\%$ evaluation success rate within the 700 training episodes. However, Config B (Faster Decay) transitioned from exploration to exploitation earlier (reaching $\epsilon = 0.10$ at episode 152 vs. episode 459 for Config A). This rapid drop allowed Config B to focus on optimizing greedy exploitation policies earlier, completing training $22.7\%$ faster in wall-clock time ($46.94$ seconds vs. $60.71$ seconds) due to shorter average episodes during training.
+   
+2. **Asymptotic Policy Stability**:
+   During greedy evaluation ($\epsilon = 0.0$), Config B achieved a slightly higher evaluation reward ($13.3026$ vs. $13.2623$) and a slightly shorter mean episode length ($19.50$ steps vs. $19.75$ steps). This indicates that the faster epsilon decay schedule allowed the policy parameters to settle on efficient trajectory profiles.
+   
+3. **Action and Steady-State Behavior**:
+   Despite Config B's advantage in efficiency, Config A (Baseline) achieved a lower final mean angle error ($0.005197$ rad vs. $0.010608$ rad). Because Config A maintained exploration for a longer period, it visited diverse joint velocity and error states, allowing the online Q-network to refine its action-value estimations (Q-values) near the success region. Consequently, Config A learned to select the `HOLD` action with higher precision when close to the target, reducing steady-state overshoot and joint velocity oscillations.
 
 ---
 
@@ -250,14 +265,14 @@ Based on the empirical evidence gathered from the parameter studies, we recommen
 
 ### Rationale
 1. **Asymptotic Performance**: Config C achieved the highest Mean Cumulative Reward ($13.3429$) and the shortest Mean Episode Length ($19.50$ steps) during the final greedy evaluations.
-2. **Exploration Window**: Exponential decay configurations (Config A and B) drop below $\epsilon = 0.10$ within the first 150 episodes. This rapid drop can trap the agent in local optima. By contrast, Config C decays linearly over 500 episodes, ensuring that the agent continues to explore diverse states and velocity configurations throughout training. This is reflected in its low final mean angle error ($0.006779$ rad), indicating a highly polished control policy.
+2. **Exploration Window**: Exponential decay configurations differ significantly; specifically, Config B drops below $\epsilon = 0.10$ within the first 152 episodes, whereas Config A maintains exploration longer, dropping below $\epsilon = 0.10$ at episode 459. Config C decays linearly over 500 episodes, ensuring that the agent continues to explore diverse states and velocity configurations throughout training. This is reflected in its low final mean angle error ($0.006779$ rad), indicating a highly polished control policy.
 
 ---
 
 ## 13. Limitations and Proposed Future Improvements
 
 ### 13.1 Limitations
-* **Action Discretization**: The joint is controlled via discrete changes ($\Delta\theta = 0.05$ rad). This step size sets a lower bound on joint precision. The joint cannot settle on targets that fall between these steps without minor oscillations.
+* **Action Discretization**: The joint is controlled via discrete changes ($\Delta\theta = 0.08$ rad). This step size sets a lower bound on joint precision. The joint cannot settle on targets that fall between these steps without minor oscillations.
 * **Single-Joint Decoupling**: The controller operates on the left elbow joint in isolation. On the full G1 robot, joint movements are coupled. This single-joint policy does not account for the inertial dynamics of the shoulder or torso.
 
 ### 13.2 Future Improvements
