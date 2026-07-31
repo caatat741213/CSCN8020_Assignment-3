@@ -15,7 +15,68 @@ This repository contains the complete implementation and empirical analysis of a
 
 Building upon the Low-Level Proportional-Derivative (PD) joint-target modulator and gravity/bias-force compensation developed during the **Unitree MuJoCo G1 Primer Workshop**, this project replaces the hand-written rule-based policy with a model-free, value-based reinforcement learning controller. 
 
-The agent learns to command discrete target adjustment actions ($\Delta \theta \in \{-0.05, 0, +0.05\}$ rad) based on the continuous robot state and joint goals. The final policy generalizes across multiple target angles, achieves 100% success rate, stabilizes the joint near target angles, and significantly outperforms the rule-based heuristic controller in stabilization time and steady-state error.
+The agent learns to command discrete target adjustment actions ($\Delta \theta \in \{-0.08, 0, +0.08\}$ rad) based on the continuous robot state and joint goals. The final policy generalizes across multiple target angles, achieves 100% success rate, stabilizes the joint near target angles, and significantly outperforms the rule-based heuristic controller in stabilization time and steady-state error.
+
+---
+
+### Reinforcement-Learning Task & MDP Formulation
+
+Before implementing the DQN, the approved `G1ElbowTargetEnv` and the existing rule-based baseline policy are validated. This establishes that the reinforcement-learning environment behaves correctly and provides a reproducible baseline for comparison with the learned policy.
+
+#### 1. MDP Formulation
+
+The environment controls the `left_elbow_joint` of a fixed-base Unitree G1 robot. A low-level proportional-derivative (PD) controller, together with MuJoCo bias-force compensation (`qfrc_bias`), converts each high-level discrete action into bounded actuator torque:
+
+$$\tau = k_p (q_{\mathrm{target}} - q_t) - k_d \dot{q}_t + \text{qfrc\_bias}$$
+
+The DQN therefore learns how to adjust the internal elbow target; it does not directly predict motor torque.
+
+During training, the task is a Markov Decision Process defined by $(S,A,P,R,\gamma)$. The four-dimensional state is:
+
+$$s_t=[q_t,\;\dot{q}_t,\;q_{\mathrm{goal}},\;q_{\mathrm{goal}}-q_t]$$
+
+where $q_t$ is the physical elbow angle (implemented as `elbow_angle`), $\dot{q}_t$ is its angular velocity (`elbow_velocity`), $q_{\mathrm{goal}}$ is the episode target (`goal_angle`), and $q_{\mathrm{goal}} - q_t$ is the position error (`angle_error`). The required evaluation targets are $-0.8$, $-0.4$, $+0.4$, and $+0.8$ rad.
+
+The discrete action space is:
+
+| Action ($a_t$) | Meaning | Code Mapping |
+|---:|---|---|
+| 0 | Decrease the internal controller target by $0.08$ rad | `ACTION_DECREASE` |
+| 1 | Hold the internal controller target | `ACTION_HOLD` |
+| 2 | Increase the internal controller target by $0.08$ rad | `ACTION_INCREASE` |
+
+After a transition, let $|e_{t+1}|=|q_{\mathrm{goal}}-q_{t+1}|$. The reward $r_{t+1}$ is defined as:
+
+$$r_{t+1} = -|e_{t+1}| + \mathbb{1}(|e_{t+1}|\leq0.04) - 0.05\mathbb{1}(|e_{t+1}|\leq0.04\land a_t\neq1) + 10\mathbb{1}(\mathrm{success})$$
+
+This formulation matches the `_calculate_reward` and `step` functions in [g1_elbow_env.py](file:///l:/Reinforcement%20Learning%20Programming/Assignment3/CSCN8020_Assignment-3/src/g1_rl/g1_elbow_env.py):
+- $-|e_{t+1}|$ is the shape penalty based on absolute error (`-absolute_error`).
+- $\mathbb{1}(|e_{t+1}|\leq0.04)$ is a success zone entry bonus of $+1.0$.
+- $-0.05\mathbb{1}(|e_{t+1}|\leq0.04\land a_t\neq1)$ is a penalty of $-0.05$ if the action is not `HOLD` near the target.
+- $10\mathbb{1}(\mathrm{success})$ is a terminal reward of $+10.0$ when the episode successfully terminates.
+
+An episode is **terminated** after the elbow remains within $0.04$ rad of the goal for eight consecutive steps (`success_streak >= 8`). It is **truncated** if the 150-step time limit is reached first (`episode_step >= 150`).
+
+The discount factor is $\gamma=0.95$, so the agent learns to maximize the discounted return:
+
+$$G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k+1} = r_{t+1}+\gamma r_{t+2}+\gamma^2r_{t+3}+\cdots$$
+
+During final evaluation, exploration is disabled and the fixed greedy policy is:
+
+$$\pi(s)=\arg\max_a Q(s,a),\qquad \epsilon=0$$
+
+#### 2. Baseline Policy and Fixed-Policy MRP
+
+To validate the environment, a deterministic rule-based heuristic baseline policy $\pi_{\mathrm{base}}(s)$ is implemented in [test_g1_elbow_env.py](file:///l:/Reinforcement%20Learning%20Programming/Assignment3/CSCN8020_Assignment-3/src/test_g1_elbow_env.py). This policy updates the controller target $q_{\mathrm{target}}$ toward $q_{\mathrm{goal}}$:
+- If target error $q_{\mathrm{goal}} - q_{\mathrm{target}} > 0.04$, select `ACTION_INCREASE` (2).
+- If target error $q_{\mathrm{goal}} - q_{\mathrm{target}} < -0.04$, select `ACTION_DECREASE` (0).
+- Otherwise, select `ACTION_HOLD` (1).
+
+Once the policy is trained and fixed, the evaluation trajectory may be interpreted as a Markov Reward Process (MRP) with transition dynamics:
+
+$$P^\pi(s_{t+1}\mid s_t) = P(s_{t+1}\mid s_t, \pi(s_t))$$
+
+This fixed-policy view allows us to study stability, steady-state errors, and joint oscillations.
 
 ---
 
