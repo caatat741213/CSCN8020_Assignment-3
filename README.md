@@ -49,7 +49,7 @@ After a transition, let $|e_{t+1}|=|q_{\mathrm{goal}}-q_{t+1}|$. The reward $r_{
 
 $$r_{t+1} = -|e_{t+1}| + \mathbb{1}(|e_{t+1}|\leq0.04) - 0.05\mathbb{1}(|e_{t+1}|\leq0.04\land a_t\neq1) + 10\mathbb{1}(\mathrm{success})$$
 
-This formulation matches the `_calculate_reward` and `step` functions in [g1_elbow_env.py](file:///l:/Reinforcement%20Learning%20Programming/Assignment3/CSCN8020_Assignment-3/src/g1_rl/g1_elbow_env.py):
+This formulation matches the `_calculate_reward` and `step` functions in [g1_elbow_env.py](src/g1_rl/g1_elbow_env.py):
 - $-|e_{t+1}|$ is the shape penalty based on absolute error (`-absolute_error`).
 - $\mathbb{1}(|e_{t+1}|\leq0.04)$ is a success zone entry bonus of $+1.0$.
 - $-0.05\mathbb{1}(|e_{t+1}|\leq0.04\land a_t\neq1)$ is a penalty of $-0.05$ if the action is not `HOLD` near the target.
@@ -67,7 +67,7 @@ $$\pi(s)=\arg\max_a Q(s,a),\qquad \epsilon=0$$
 
 #### 2. Baseline Policy and Fixed-Policy MRP
 
-To validate the environment, a deterministic rule-based heuristic baseline policy $\pi_{\mathrm{base}}(s)$ is implemented in [test_g1_elbow_env.py](file:///l:/Reinforcement%20Learning%20Programming/Assignment3/CSCN8020_Assignment-3/src/test_g1_elbow_env.py). This policy updates the controller target $q_{\mathrm{target}}$ toward $q_{\mathrm{goal}}$:
+To validate the environment, a deterministic rule-based heuristic baseline policy $\pi_{\mathrm{base}}(s)$ is implemented in [test_g1_elbow_env.py](src/test_g1_elbow_env.py). This policy updates the controller target $q_{\mathrm{target}}$ toward $q_{\mathrm{goal}}$:
 - If target error $q_{\mathrm{goal}} - q_{\mathrm{target}} > 0.04$, select `ACTION_INCREASE` (2).
 - If target error $q_{\mathrm{goal}} - q_{\mathrm{target}} < -0.04$, select `ACTION_DECREASE` (0).
 - Otherwise, select `ACTION_HOLD` (1).
