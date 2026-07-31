@@ -103,6 +103,12 @@ All scripts should be executed from the repository root:
   
   # Train Configuration C (Linear Decay - Empirical Winner)
   PYTHONPATH=src python src/dqn/train_dqn.py --config c_linear --episodes 700
+
+  # Train Configuration D (Fast Target Update)
+  PYTHONPATH=src python src/dqn/train_dqn.py --config d_fast_target --episodes 700
+  
+  # Train Configuration E (Small Buffer)
+  PYTHONPATH=src python src/dqn/train_dqn.py --config e_small_buffer --episodes 700
   ```
 
 * **Evaluating a Trained Model Checkpoint:**
